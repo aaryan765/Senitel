@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.aaryan.senitel.utils.isValidCIDR
 import com.aaryan.senitel.utils.isValidHostname
 import com.aaryan.senitel.utils.isValidIPv4
+import com.aaryan.senitel.utils.scanTypes
 
 @Composable
 fun ScanControlPanel() {
@@ -26,6 +27,11 @@ fun ScanControlPanel() {
 
     var validationColor by remember {
         mutableStateOf(Color.White)
+    }
+
+    // NEW: Parent owns the selected scan
+    var selectedScan by remember {
+        mutableStateOf(scanTypes.first())
     }
 
     Column(
@@ -65,7 +71,15 @@ fun ScanControlPanel() {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        ScanSelector()
+        ScanSelector(
+
+            selectedScan = selectedScan,
+
+            onScanSelected = {
+                selectedScan = it
+            }
+
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -77,7 +91,7 @@ fun ScanControlPanel() {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Discover live hosts on the selected network.",
+            text = selectedScan.description,
             color = Color.LightGray
         )
 

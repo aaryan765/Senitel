@@ -12,17 +12,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aaryan.senitel.utils.ScanType
 import com.aaryan.senitel.utils.scanTypes
 
 @Composable
-fun ScanSelector() {
+fun ScanSelector(
+
+    selectedScan: ScanType,
+
+    onScanSelected: (ScanType) -> Unit
+
+) {
 
     var expanded by remember {
         mutableStateOf(false)
-    }
-
-    var selectedScan by remember {
-        mutableStateOf(scanTypes.first())
     }
 
     Column(
@@ -38,7 +41,9 @@ fun ScanSelector() {
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
+
                     expanded = !expanded
+
                 }
                 .padding(14.dp),
 
@@ -47,18 +52,27 @@ fun ScanSelector() {
         ) {
 
             Text(
+
                 text = "> ${selectedScan.name}",
+
                 color = Color.White,
+
                 fontFamily = FontFamily.Monospace,
+
                 fontWeight = FontWeight.Bold
+
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
+
                 text = if (expanded) "-" else "+",
+
                 color = Color.White,
+
                 fontWeight = FontWeight.Bold
+
             )
 
         }
@@ -77,7 +91,8 @@ fun ScanSelector() {
                             .fillMaxWidth()
                             .clickable {
 
-                                selectedScan = scan
+                                onScanSelected(scan)
+
                                 expanded = false
 
                             }
@@ -86,9 +101,13 @@ fun ScanSelector() {
                     ) {
 
                         Text(
+
                             text = scan.name,
+
                             color = Color.LightGray,
+
                             fontFamily = FontFamily.Monospace
+
                         )
 
                     }
