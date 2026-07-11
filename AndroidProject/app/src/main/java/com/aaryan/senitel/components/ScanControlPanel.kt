@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.aaryan.senitel.engine.ScanEngine
 import com.aaryan.senitel.utils.isValidCIDR
 import com.aaryan.senitel.utils.isValidHostname
 import com.aaryan.senitel.utils.isValidIPv4
@@ -29,13 +30,16 @@ fun ScanControlPanel() {
         mutableStateOf(Color.White)
     }
 
-    // NEW
     var scanStatus by remember {
         mutableStateOf("READY")
     }
 
     var selectedScan by remember {
         mutableStateOf(scanTypes.first())
+    }
+
+    val scanEngine = remember {
+        ScanEngine()
     }
 
     Column(
@@ -103,7 +107,10 @@ fun ScanControlPanel() {
                         validationMessage = "✓ Valid IPv4 Address"
                         validationColor = Color.Green
 
-                        scanStatus = "Starting ${selectedScan.name}..."
+                        scanStatus = scanEngine.startScan(
+                            target,
+                            selectedScan
+                        )
 
                     }
 
@@ -112,7 +119,10 @@ fun ScanControlPanel() {
                         validationMessage = "✓ Valid Network Range"
                         validationColor = Color.Green
 
-                        scanStatus = "Starting ${selectedScan.name}..."
+                        scanStatus = scanEngine.startScan(
+                            target,
+                            selectedScan
+                        )
 
                     }
 
@@ -121,7 +131,10 @@ fun ScanControlPanel() {
                         validationMessage = "✓ Valid Hostname"
                         validationColor = Color.Green
 
-                        scanStatus = "Starting ${selectedScan.name}..."
+                        scanStatus = scanEngine.startScan(
+                            target,
+                            selectedScan
+                        )
 
                     }
 

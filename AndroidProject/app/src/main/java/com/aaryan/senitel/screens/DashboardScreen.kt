@@ -2,6 +2,8 @@ package com.aaryan.senitel.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,9 +20,12 @@ import com.aaryan.senitel.components.StatusCard
 @Composable
 fun DashboardScreen() {
 
+    val scrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .background(Color(0xFF121212))
             .padding(16.dp)
     ) {
