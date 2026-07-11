@@ -29,18 +29,20 @@ fun ScanControlPanel() {
         mutableStateOf(Color.White)
     }
 
-    // NEW: Parent owns the selected scan
+    // NEW
+    var scanStatus by remember {
+        mutableStateOf("READY")
+    }
+
     var selectedScan by remember {
         mutableStateOf(scanTypes.first())
     }
 
     Column(
-
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, Color.White)
             .padding(16.dp)
-
     ) {
 
         Text(
@@ -51,15 +53,11 @@ fun ScanControlPanel() {
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-
             value = target,
-
             onValueChange = {
                 target = it
             },
-
             modifier = Modifier.fillMaxWidth()
-
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -72,13 +70,10 @@ fun ScanControlPanel() {
         Spacer(modifier = Modifier.height(8.dp))
 
         ScanSelector(
-
             selectedScan = selectedScan,
-
             onScanSelected = {
                 selectedScan = it
             }
-
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -104,23 +99,39 @@ fun ScanControlPanel() {
                 when {
 
                     isValidIPv4(target) -> {
+
                         validationMessage = "✓ Valid IPv4 Address"
                         validationColor = Color.Green
+
+                        scanStatus = "Starting ${selectedScan.name}..."
+
                     }
 
                     isValidCIDR(target) -> {
+
                         validationMessage = "✓ Valid Network Range"
                         validationColor = Color.Green
+
+                        scanStatus = "Starting ${selectedScan.name}..."
+
                     }
 
                     isValidHostname(target) -> {
+
                         validationMessage = "✓ Valid Hostname"
                         validationColor = Color.Green
+
+                        scanStatus = "Starting ${selectedScan.name}..."
+
                     }
 
                     else -> {
+
                         validationMessage = "✗ Invalid Target"
                         validationColor = Color.Red
+
+                        scanStatus = "READY"
+
                     }
 
                 }
@@ -133,7 +144,21 @@ fun ScanControlPanel() {
 
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "STATUS",
+            color = Color.White
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = scanStatus,
+            color = Color.Cyan
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = validationMessage,
