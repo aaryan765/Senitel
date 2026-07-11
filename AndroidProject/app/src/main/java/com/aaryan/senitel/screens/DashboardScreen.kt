@@ -10,6 +10,8 @@ import androidx.compose.ui.unit.dp
 import com.aaryan.senitel.components.Header
 import com.aaryan.senitel.components.NavigationPanel
 import com.aaryan.senitel.components.RadarPanel
+import com.aaryan.senitel.components.RecentActivity
+import com.aaryan.senitel.components.ScanControlPanel
 import com.aaryan.senitel.components.StatusCard
 
 @Composable
@@ -53,6 +55,14 @@ fun DashboardScreen() {
             }
 
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        ScanControlPanel()
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        RecentActivity()
 
     }
 
