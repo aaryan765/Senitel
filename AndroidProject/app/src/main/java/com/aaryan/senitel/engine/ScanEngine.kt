@@ -1,5 +1,6 @@
 package com.aaryan.senitel.engine
 
+import com.aaryan.senitel.models.Host
 import com.aaryan.senitel.utils.ScanType
 
 class ScanEngine {
@@ -9,7 +10,7 @@ class ScanEngine {
     fun startScan(
         target: String,
         scanType: ScanType
-    ): String {
+    ): List<Host> {
 
         return when (scanType.name) {
 
@@ -18,7 +19,7 @@ class ScanEngine {
             }
 
             else -> {
-                "Scan type not implemented yet."
+                emptyList()
             }
 
         }

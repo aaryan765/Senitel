@@ -107,10 +107,17 @@ fun ScanControlPanel() {
                         validationMessage = "✓ Valid IPv4 Address"
                         validationColor = Color.Green
 
-                        scanStatus = scanEngine.startScan(
+                        val results = scanEngine.startScan(
                             target,
                             selectedScan
                         )
+
+                        scanStatus =
+                            if (results.isEmpty()) {
+                                "No hosts found."
+                            } else {
+                                "Hosts Found: ${results.size}"
+                            }
 
                     }
 
@@ -119,10 +126,17 @@ fun ScanControlPanel() {
                         validationMessage = "✓ Valid Network Range"
                         validationColor = Color.Green
 
-                        scanStatus = scanEngine.startScan(
+                        val results = scanEngine.startScan(
                             target,
                             selectedScan
                         )
+
+                        scanStatus =
+                            if (results.isEmpty()) {
+                                "No hosts found."
+                            } else {
+                                "Hosts Found: ${results.size}"
+                            }
 
                     }
 
@@ -131,10 +145,17 @@ fun ScanControlPanel() {
                         validationMessage = "✓ Valid Hostname"
                         validationColor = Color.Green
 
-                        scanStatus = scanEngine.startScan(
+                        val results = scanEngine.startScan(
                             target,
                             selectedScan
                         )
+
+                        scanStatus =
+                            if (results.isEmpty()) {
+                                "No hosts found."
+                            } else {
+                                "Hosts Found: ${results.size}"
+                            }
 
                     }
 
