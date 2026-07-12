@@ -20,15 +20,37 @@ class TcpScanner {
                     timeout
                 )
 
+                true
+
             }
 
-            true
-
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
             false
 
         }
+
+    }
+
+    fun scanPorts(
+        ip: String,
+        ports: List<Int>,
+        timeout: Int = 1000
+    ): List<Int> {
+
+        val openPorts = mutableListOf<Int>()
+
+        for (port in ports) {
+
+            if (isPortOpen(ip, port, timeout)) {
+
+                openPorts.add(port)
+
+            }
+
+        }
+
+        return openPorts
 
     }
 

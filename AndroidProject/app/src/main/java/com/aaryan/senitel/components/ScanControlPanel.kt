@@ -34,6 +34,10 @@ fun ScanControlPanel() {
         mutableStateOf("READY")
     }
 
+    var isScanning by remember {
+        mutableStateOf(false)
+    }
+
     var selectedScan by remember {
         mutableStateOf(scanTypes.first())
     }
@@ -98,7 +102,11 @@ fun ScanControlPanel() {
 
         Button(
 
+            enabled = !isScanning,
+
             onClick = {
+
+                isScanning = true
 
                 when {
 
@@ -119,6 +127,7 @@ fun ScanControlPanel() {
                                 "Hosts Found: ${results.size}"
                             }
 
+                        isScanning = false
                     }
 
                     isValidCIDR(target) -> {
@@ -138,6 +147,7 @@ fun ScanControlPanel() {
                                 "Hosts Found: ${results.size}"
                             }
 
+                        isScanning = false
                     }
 
                     isValidHostname(target) -> {
@@ -157,6 +167,7 @@ fun ScanControlPanel() {
                                 "Hosts Found: ${results.size}"
                             }
 
+                        isScanning = false
                     }
 
                     else -> {
@@ -166,6 +177,7 @@ fun ScanControlPanel() {
 
                         scanStatus = "READY"
 
+                        isScanning = false
                     }
 
                 }
@@ -174,7 +186,11 @@ fun ScanControlPanel() {
 
         ) {
 
-            Text("RUN SCAN")
+            if (isScanning) {
+                Text("SCANNING...")
+            } else {
+                Text("RUN SCAN")
+            }
 
         }
 

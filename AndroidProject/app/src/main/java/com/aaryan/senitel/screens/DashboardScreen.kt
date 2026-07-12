@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaryan.senitel.components.Header
 import com.aaryan.senitel.components.NavigationPanel
 import com.aaryan.senitel.components.ProgressPanel
@@ -16,9 +17,12 @@ import com.aaryan.senitel.components.RadarPanel
 import com.aaryan.senitel.components.RecentActivity
 import com.aaryan.senitel.components.ScanControlPanel
 import com.aaryan.senitel.components.StatusCard
+import com.aaryan.senitel.viewmodel.DashboardViewModel
 
 @Composable
 fun DashboardScreen() {
+
+    val dashboardViewModel: DashboardViewModel = viewModel()
 
     val scrollState = rememberScrollState()
 
@@ -64,7 +68,9 @@ fun DashboardScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        ScanControlPanel()
+        ScanControlPanel(
+            dashboardViewModel = dashboardViewModel
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 

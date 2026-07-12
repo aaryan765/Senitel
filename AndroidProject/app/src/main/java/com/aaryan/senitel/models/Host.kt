@@ -10,7 +10,14 @@ data class Host(
 
     val macAddress: String? = null,
 
-    val vendor: String? = null
+    val vendor: String? = null,
+
+    val responseTime: Long? = null,
+
+    val operatingSystem: String? = null,
+
+    val openPorts: List<Int> = emptyList(),
+
+    val lastSeen: Long = System.currentTimeMillis()
 
 )
-

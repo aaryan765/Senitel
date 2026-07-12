@@ -19,18 +19,21 @@ class DashboardViewModel : ViewModel() {
     private val _hosts = MutableStateFlow<List<Host>>(emptyList())
     val hosts: StateFlow<List<Host>> = _hosts.asStateFlow()
 
-    private val _scanState = MutableStateFlow(ScanState.READY)
+    private val _scanState = MutableStateFlow(ScanState.IDLE)
     val scanState: StateFlow<ScanState> = _scanState.asStateFlow()
 
     private val _scanStatus = MutableStateFlow("READY")
     val scanStatus: StateFlow<String> = _scanStatus.asStateFlow()
+
+    init {
+        _scanState.value = ScanState.READY
+    }
 
     fun startScan(
         target: String,
         scanType: ScanType
     ) {
 
-        // Prevent multiple scans from running
         if (_scanState.value == ScanState.SCANNING) {
             return
         }
@@ -58,7 +61,7 @@ class DashboardViewModel : ViewModel() {
                         "Hosts Found: ${results.size}"
                     }
 
-            } catch (e: Exception) {
+            } catch (_: Exception) {
 
                 _scanState.value = ScanState.ERROR
                 _scanStatus.value = "Scan Failed"
@@ -69,9 +72,22 @@ class DashboardViewModel : ViewModel() {
 
     }
 
+    fun stopScan() {
+
+        scanEngine.stopScan()
+
+        _scanState.value = ScanState.STOPPING
+
+        _scanStatus.value = "Stopping..."
+
+    }
+
     fun reset() {
 
+        _hosts.value = emptyList()
+
         _scanState.value = ScanState.READY
+
         _scanStatus.value = "READY"
 
     }

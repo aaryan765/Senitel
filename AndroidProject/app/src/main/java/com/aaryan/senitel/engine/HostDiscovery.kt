@@ -8,102 +8,111 @@ class HostDiscovery {
 
     private val tcpScanner = TcpScanner()
 
+    private val commonPorts = listOf(
+        21,
+        22,
+        23,
+        25,
+        53,
+        80,
+        110,
+        135,
+        139,
+        143,
+        443,
+        445,
+        3389,
+        8080
+    )
+
     fun discover(target: String): List<Host> {
+
+        return if (target.contains("/")) {
+            discoverNetwork(target)
+        } else {
+            discoverSingleHost(target)
+        }
+
+    }
+
+    private fun discoverNetwork(
+        cidr: String
+    ): List<Host> {
 
         val hosts = mutableListOf<Host>()
 
-        val commonPorts = listOf(
-            80,
-            443,
-            22,
-            445
-        )
+        val addresses = expandCIDR(cidr)
 
-        // Handle CIDR network (example: 192.168.1.0/24)
-        if (target.contains("/")) {
+        for (ip in addresses) {
 
-            val addresses = expandCIDR(target)
+            val host = discoverHost(ip)
 
-            for (ip in addresses) {
-
-                var reachable = false
-
-                for (port in commonPorts) {
-
-                    if (tcpScanner.isPortOpen(ip, port, 150)) {
-
-                        reachable = true
-                        break
-
-                    }
-
-                }
-
-                if (reachable) {
-
-                    try {
-
-                        val address = InetAddress.getByName(ip)
-
-                        hosts.add(
-                            Host(
-                                ip = address.hostAddress ?: ip,
-                                hostname = address.hostName ?: "Unknown",
-                                reachable = true,
-                                macAddress = null,
-                                vendor = null
-                            )
-                        )
-
-                    } catch (_: Exception) {
-
-                    }
-
-                }
-
+            if (host != null) {
+                hosts.add(host)
             }
-
-            return hosts
 
         }
 
-        // Handle single IP or hostname
-        try {
+        return hosts
+
+    }
+
+    private fun discoverSingleHost(
+        target: String
+    ): List<Host> {
+
+        val host = discoverHost(target)
+
+        return if (host != null) {
+            listOf(host)
+        } else {
+            emptyList()
+        }
+
+    }
+
+    private fun discoverHost(
+        target: String
+    ): Host? {
+
+        return try {
 
             val address = InetAddress.getByName(target)
 
-            var reachable = false
+            val ipAddress = address.hostAddress ?: target
 
-            for (port in commonPorts) {
+            val hostName = address.hostName ?: "Unknown"
 
-                if (tcpScanner.isPortOpen(target, port, 1000)) {
+            val openPorts = tcpScanner.scanPorts(
+                ipAddress,
+                commonPorts,
+                150
+            )
 
-                    reachable = true
-                    break
+            if (openPorts.isEmpty()) {
 
-                }
+                null
 
-            }
+            } else {
 
-            if (reachable) {
-
-                hosts.add(
-                    Host(
-                        ip = address.hostAddress ?: target,
-                        hostname = address.hostName ?: "Unknown",
-                        reachable = true,
-                        macAddress = null,
-                        vendor = null
-                    )
+                Host(
+                    ip = ipAddress,
+                    hostname = hostName,
+                    reachable = true,
+                    macAddress = null,
+                    vendor = null,
+                    responseTime = null,
+                    operatingSystem = null,
+                    openPorts = openPorts
                 )
 
             }
 
         } catch (_: Exception) {
 
-        }
+            null
 
-        return hosts
+        }
 
     }
 
