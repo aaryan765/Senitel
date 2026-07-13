@@ -10,9 +10,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aaryan.senitel.models.Host
 
 @Composable
-fun RecentActivity() {
+fun RecentActivity(
+    hosts: List<Host> = emptyList()
+) {
 
     Column(
 
@@ -24,7 +27,7 @@ fun RecentActivity() {
     ) {
 
         Text(
-            text = "RECENT ACTIVITY",
+            text = "DISCOVERED HOSTS (${hosts.size})",
             color = Color.White,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace
@@ -32,24 +35,22 @@ fun RecentActivity() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        ActivityItem(
-            "22:13",
-            "Host Discovery Started"
-        )
-
-        HorizontalDivider(color = Color.DarkGray)
-
-        ActivityItem(
-            "22:14",
-            "5 Active Hosts Found"
-        )
-
-        HorizontalDivider(color = Color.DarkGray)
-
-        ActivityItem(
-            "22:16",
-            "Port Scan Completed"
-        )
+        if (hosts.isEmpty()) {
+            Text(
+                text = "No active hosts discovered yet.",
+                color = Color.Gray,
+                modifier = Modifier.padding(vertical = 10.dp)
+            )
+        } else {
+            hosts.takeLast(10).reversed().forEach { host ->
+                ActivityItem(
+                    ip = host.ip,
+                    hostname = host.hostname ?: "Unknown Host",
+                    ports = host.openPorts.joinToString(", ")
+                )
+                HorizontalDivider(color = Color.DarkGray)
+            }
+        }
 
     }
 
@@ -57,8 +58,9 @@ fun RecentActivity() {
 
 @Composable
 fun ActivityItem(
-    time: String,
-    message: String
+    ip: String,
+    hostname: String,
+    ports: String
 ) {
 
     Column(
@@ -66,15 +68,24 @@ fun ActivityItem(
     ) {
 
         Text(
-            text = time,
-            color = Color.Gray,
-            fontFamily = FontFamily.Monospace
+            text = ip,
+            color = Color.Cyan,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = message,
+            text = hostname,
             color = Color.White
         )
+        
+        if (ports.isNotEmpty()) {
+            Text(
+                text = "Ports: $ports",
+                color = Color.Green,
+                fontFamily = FontFamily.Monospace
+            )
+        }
 
     }
 

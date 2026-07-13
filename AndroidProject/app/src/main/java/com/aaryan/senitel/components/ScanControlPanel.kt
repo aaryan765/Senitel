@@ -3,21 +3,25 @@ package com.aaryan.senitel.components
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.aaryan.senitel.engine.ScanEngine
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aaryan.senitel.models.ScanState
 import com.aaryan.senitel.utils.isValidCIDR
 import com.aaryan.senitel.utils.isValidHostname
 import com.aaryan.senitel.utils.isValidIPv4
 import com.aaryan.senitel.utils.scanTypes
+import com.aaryan.senitel.viewmodel.DashboardViewModel
 
 @Composable
-fun ScanControlPanel() {
-
+fun ScanControlPanel(
+    dashboardViewModel: DashboardViewModel
+) {
     var target by remember {
         mutableStateOf("192.168.1.0/24")
     }
@@ -30,21 +34,17 @@ fun ScanControlPanel() {
         mutableStateOf(Color.White)
     }
 
-    var scanStatus by remember {
-        mutableStateOf("READY")
-    }
-
-    var isScanning by remember {
-        mutableStateOf(false)
-    }
-
     var selectedScan by remember {
         mutableStateOf(scanTypes.first())
     }
 
-    val scanEngine = remember {
-        ScanEngine()
-    }
+    val scanStatus by dashboardViewModel
+        .scanStatus
+        .collectAsStateWithLifecycle()
+
+    val scanState by dashboardViewModel
+        .scanState
+        .collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -52,7 +52,6 @@ fun ScanControlPanel() {
             .border(1.dp, Color.White)
             .padding(16.dp)
     ) {
-
         Text(
             text = "TARGET",
             color = Color.White
@@ -65,7 +64,8 @@ fun ScanControlPanel() {
             onValueChange = {
                 target = it
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = scanState != ScanState.SCANNING
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -84,114 +84,47 @@ fun ScanControlPanel() {
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "DESCRIPTION",
-            color = Color.White
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = selectedScan.description,
-            color = Color.LightGray
-        )
-
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(
-
-            enabled = !isScanning,
-
-            onClick = {
-
-                isScanning = true
-
-                when {
-
-                    isValidIPv4(target) -> {
-
-                        validationMessage = "✓ Valid IPv4 Address"
-                        validationColor = Color.Green
-
-                        val results = scanEngine.startScan(
-                            target,
-                            selectedScan
-                        )
-
-                        scanStatus =
-                            if (results.isEmpty()) {
-                                "No hosts found."
-                            } else {
-                                "Hosts Found: ${results.size}"
-                            }
-
-                        isScanning = false
-                    }
-
-                    isValidCIDR(target) -> {
-
-                        validationMessage = "✓ Valid Network Range"
-                        validationColor = Color.Green
-
-                        val results = scanEngine.startScan(
-                            target,
-                            selectedScan
-                        )
-
-                        scanStatus =
-                            if (results.isEmpty()) {
-                                "No hosts found."
-                            } else {
-                                "Hosts Found: ${results.size}"
-                            }
-
-                        isScanning = false
-                    }
-
-                    isValidHostname(target) -> {
-
-                        validationMessage = "✓ Valid Hostname"
-                        validationColor = Color.Green
-
-                        val results = scanEngine.startScan(
-                            target,
-                            selectedScan
-                        )
-
-                        scanStatus =
-                            if (results.isEmpty()) {
-                                "No hosts found."
-                            } else {
-                                "Hosts Found: ${results.size}"
-                            }
-
-                        isScanning = false
-                    }
-
-                    else -> {
-
-                        validationMessage = "✗ Invalid Target"
-                        validationColor = Color.Red
-
-                        scanStatus = "READY"
-
-                        isScanning = false
-                    }
-
-                }
-
-            }
-
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-
-            if (isScanning) {
-                Text("SCANNING...")
-            } else {
-                Text("RUN SCAN")
+            Button(
+                modifier = Modifier.weight(1f),
+                enabled = scanState != ScanState.SCANNING,
+                onClick = {
+                    when {
+                        isValidIPv4(target) || isValidCIDR(target) || isValidHostname(target) -> {
+                            validationMessage = "✓ Valid Target"
+                            validationColor = Color.Green
+                            dashboardViewModel.startScan(
+                                target = target,
+                                scanType = selectedScan
+                            )
+                        }
+                        else -> {
+                            validationMessage = "✗ Invalid Target"
+                            validationColor = Color.Red
+                            dashboardViewModel.reset()
+                        }
+                    }
+                }
+            ) {
+                Text(if (scanState == ScanState.SCANNING) "SCANNING..." else "RUN SCAN")
             }
 
+            if (scanState == ScanState.SCANNING) {
+                Button(
+                    modifier = Modifier.weight(0.5f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    onClick = {
+                        dashboardViewModel.stopScan()
+                    }
+                ) {
+                    Text("STOP", color = Color.White)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -208,13 +141,12 @@ fun ScanControlPanel() {
             color = Color.Cyan
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = validationMessage,
-            color = validationColor
-        )
-
+        if (validationMessage.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = validationMessage,
+                color = validationColor
+            )
+        }
     }
-
 }

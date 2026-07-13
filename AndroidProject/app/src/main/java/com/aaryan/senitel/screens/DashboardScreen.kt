@@ -6,9 +6,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aaryan.senitel.components.Header
 import com.aaryan.senitel.components.NavigationPanel
@@ -23,8 +25,11 @@ import com.aaryan.senitel.viewmodel.DashboardViewModel
 fun DashboardScreen() {
 
     val dashboardViewModel: DashboardViewModel = viewModel()
-
     val scrollState = rememberScrollState()
+    
+    val scanStatus by dashboardViewModel.scanStatus.collectAsStateWithLifecycle()
+    val progress by dashboardViewModel.progress.collectAsStateWithLifecycle()
+    val hosts by dashboardViewModel.hosts.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -74,11 +79,16 @@ fun DashboardScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        ProgressPanel()
+        ProgressPanel(
+            status = scanStatus,
+            progress = progress
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        RecentActivity()
+        RecentActivity(
+            hosts = hosts
+        )
 
     }
 
