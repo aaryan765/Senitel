@@ -8,52 +8,52 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun NavigationPanel() {
-
     Column(
         modifier = Modifier
-            .width(150.dp)
-            .border(1.dp, Color.White)
-            .padding(8.dp),
-
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .width(72.dp),
+        verticalArrangement = Arrangement.Top
     ) {
-
-        MenuItem("OPERATIONS")
-        MenuItem("DEVICES")
-        MenuItem("REPORTS")
-        MenuItem("TOOLS")
-        MenuItem("ASSISTANT")
-        MenuItem("SETTINGS")
-
+        NavItem("🎯", "SCAN", isSelected = true)
+        NavItem("🖥️", "DEVICES")
+        NavItem("📄", "REPORTS")
+        NavItem("🔧", "TOOLS")
+        NavItem("⠿", "CTOS APPS")
+        NavItem("💬", "MESSAGES")
+        NavItem("⚙️", "SETTINGS")
     }
-
 }
 
 @Composable
-fun MenuItem(title: String) {
-
+private fun NavItem(icon: String, label: String, isSelected: Boolean = false) {
+    val tint = if (isSelected) Color(0xFF33AAFF) else Color.White.copy(alpha = 0.5f)
+    val borderColor = if (isSelected) Color(0xFF33AAFF) else Color.White.copy(alpha = 0.2f)
+    
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, Color.White)
-            .padding(vertical = 14.dp),
-
+            .aspectRatio(1f)
+            .border(1.dp, borderColor),
         contentAlignment = Alignment.Center
     ) {
-
-        Text(
-            text = title,
-            color = Color.White,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold
-        )
-
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = icon,
+                fontSize = 20.sp,
+                color = tint
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                color = tint,
+                fontSize = 8.sp,
+                fontFamily = FontFamily.Monospace,
+                letterSpacing = 1.sp
+            )
+        }
     }
-
 }
-

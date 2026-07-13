@@ -3,32 +3,37 @@ package com.aaryan.senitel.utils
 import java.util.Locale
 import kotlin.math.pow
 
-fun expandCIDR(cidr: String): List<String> {
+fun expandCIDRToSequence(cidr: String): Sequence<String> = sequence {
     val parts = cidr.split("/")
-    if (parts.size != 2) return emptyList()
+    if (parts.size != 2) return@sequence
 
     val baseIp = parts[0]
-    val prefix = parts[1].toIntOrNull() ?: return emptyList()
-    if (prefix !in 0..32) return emptyList()
+    val prefix = parts[1].toIntOrNull() ?: return@sequence
+    if (prefix !in 0..32) return@sequence
 
-    val ipInt = ipToLong(baseIp) ?: return emptyList()
+    val ipInt = ipToLong(baseIp) ?: return@sequence
     
     val mask = if (prefix == 0) 0L else (-1L shl (32 - prefix)) and 0xFFFFFFFFL
     val network = ipInt and mask
     val numHosts = 2.0.pow(32 - prefix).toLong()
 
-    // For discovery, we'll generate the list. 
-    // Excluding network and broadcast for common subnets
     val start = if (prefix <= 30) 1 else 0
     val end = if (prefix <= 30) numHosts - 2 else numHosts - 1
 
-    val hosts = mutableListOf<String>()
     if (start <= end) {
         for (i in start..end) {
-            hosts.add(longToIp(network + i))
+            yield(longToIp(network + i))
         }
     }
-    return hosts
+}
+
+fun getCIDRCount(cidr: String): Int {
+    val parts = cidr.split("/")
+    if (parts.size != 2) return 1
+    val prefix = parts[1].toIntOrNull() ?: return 1
+    if (prefix >= 32) return 1
+    val numHosts = 2.0.pow(32 - prefix).toLong()
+    return if (prefix <= 30) (numHosts - 2).toInt() else numHosts.toInt()
 }
 
 fun ipToLong(ip: String): Long? {

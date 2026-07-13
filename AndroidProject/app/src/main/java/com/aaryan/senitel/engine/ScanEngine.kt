@@ -1,6 +1,6 @@
 package com.aaryan.senitel.engine
 
-import com.aaryan.senitel.models.HostProbeResult
+import com.aaryan.senitel.models.DiscoveryEvent
 import com.aaryan.senitel.utils.ScanType
 import kotlinx.coroutines.flow.Flow
 
@@ -11,10 +11,7 @@ class ScanEngine {
     fun startScan(
         target: String,
         @Suppress("UNUSED_PARAMETER") scanType: ScanType
-    ): Flow<HostProbeResult> {
+    ): Flow<DiscoveryEvent> {
         return hostDiscovery.discover(target)
-    }
-
-    fun stopScan() {
     }
 }
