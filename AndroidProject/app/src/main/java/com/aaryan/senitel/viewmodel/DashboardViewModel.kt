@@ -5,21 +5,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.aaryan.senitel.data.UserPreferencesRepository
 import com.aaryan.senitel.engine.ScanEngine
-import com.aaryan.senitel.models.ActivityLog
-import com.aaryan.senitel.models.DiscoveryEvent
-import com.aaryan.senitel.models.Host
-import com.aaryan.senitel.models.ScanResult
-import com.aaryan.senitel.models.ScanState
+import com.aaryan.senitel.models.*
 import com.aaryan.senitel.utils.ScanType
 import com.aaryan.senitel.utils.scanTypes
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class DashboardViewModel(application: Application) : AndroidViewModel(application) {
@@ -52,9 +44,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _elapsedTime = MutableStateFlow(0L)
     val elapsedTime: StateFlow<Long> = _elapsedTime.asStateFlow()
 
-    private val _scanResult = MutableStateFlow<ScanResult?>(null)
-    val scanResult: StateFlow<ScanResult?> = _scanResult.asStateFlow()
-
     private val _selectedScanType = MutableStateFlow(scanTypes.first())
     val selectedScanType: StateFlow<ScanType> = _selectedScanType.asStateFlow()
 
@@ -64,8 +53,27 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         "AIDEN"
     )
 
+    val targetHistory = userPrefs.targetHistory.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        emptyList()
+    )
+
+    init {
+        viewModelScope.launch {
+            val lastScanTypeName = userPrefs.lastScanType.first()
+            val savedType = scanTypes.find { it.name == lastScanTypeName }
+            if (savedType != null) {
+                _selectedScanType.value = savedType
+            }
+        }
+    }
+
     fun updateScanType(scanType: ScanType) {
         _selectedScanType.value = scanType
+        viewModelScope.launch {
+            userPrefs.updateLastScanType(scanType.name)
+        }
     }
 
     fun updateOperatorName(name: String) {
@@ -78,8 +86,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         if (_scanState.value == ScanState.SCANNING) return
 
         resetState()
-        addLog("Scan Started")
+        addLog("INITIALIZING SCAN: $target")
         
+        viewModelScope.launch {
+            userPrefs.updateLastTarget(target)
+        }
+
         scanJob = viewModelScope.launch(Dispatchers.IO) {
             _scanState.value = ScanState.SCANNING
             _scanStatus.value = "SCANNING"
@@ -99,6 +111,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         when (event) {
                             is DiscoveryEvent.Started -> {
                                 _totalToScan.value = event.total
+                                addLog("NETWORK ENUMERATION COMPLETE: ${event.total} TARGETS")
                             }
                             is DiscoveryEvent.Progress -> {
                                 _scannedCount.value = event.current
@@ -106,52 +119,49 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                             }
                             is DiscoveryEvent.HostFound -> {
                                 _hosts.value = _hosts.value + event.host
-                                addLog("Host Found: ${event.host.ip}")
-                                event.host.openPorts.forEach { port ->
-                                    addLog("Port $port Open on ${event.host.ip}")
-                                }
+                                addLog("NODE DETECTED: ${event.host.ip}")
                             }
                             is DiscoveryEvent.Completed -> {
                                 timerJob.cancel()
-                                addLog("Scan Complete")
                                 finalizeScan(startTime)
                             }
                             is DiscoveryEvent.Error -> {
                                 timerJob.cancel()
-                                _scanState.value = ScanState.ERROR
-                                _scanStatus.value = "ERROR"
-                                addLog("Error: ${event.message}")
+                                handleError(event.message)
                             }
                         }
                     }
             } catch (e: CancellationException) {
                 timerJob.cancel()
-                _scanState.value = ScanState.READY
                 _scanStatus.value = "STOPPED"
-                addLog("Scan Stopped")
+                addLog("SCAN ABORTED BY OPERATOR")
+                _scanState.value = ScanState.READY
             } catch (e: Exception) {
                 timerJob.cancel()
-                _scanState.value = ScanState.ERROR
-                _scanStatus.value = "ERROR"
-                addLog("Error: ${e.localizedMessage}")
+                handleError(e.localizedMessage ?: "UNKNOWN ERROR")
             }
         }
     }
 
     private fun addLog(message: String) {
-        _activityLogs.value = _activityLogs.value + ActivityLog(message = message)
+        val currentLogs = _activityLogs.value.toMutableList()
+        currentLogs.add(ActivityLog(message = message))
+        if (currentLogs.size > 50) currentLogs.removeAt(0)
+        _activityLogs.value = currentLogs
+    }
+
+    private fun handleError(message: String) {
+        _scanState.value = ScanState.ERROR
+        _scanStatus.value = "ERROR"
+        addLog("CRITICAL FAILURE: $message")
     }
 
     private fun finalizeScan(startTime: Long) {
         val duration = System.currentTimeMillis() - startTime
         _scanState.value = ScanState.COMPLETED
         _scanStatus.value = "COMPLETED"
-        _scanResult.value = ScanResult(
-            hosts = _hosts.value,
-            scanTime = duration,
-            hostsScanned = _scannedCount.value,
-            hostsAlive = _hosts.value.size
-        )
+        addLog("SCAN SEQUENCE COMPLETE IN ${duration}ms")
+        addLog("ALIVE HOSTS: ${_hosts.value.size}")
     }
 
     private fun resetState() {
@@ -161,7 +171,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         _scannedCount.value = 0
         _totalToScan.value = 0
         _elapsedTime.value = 0L
-        _scanResult.value = null
     }
 
     fun stopScan() {
@@ -170,12 +179,5 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             _scanStatus.value = "STOPPING"
             scanJob?.cancel()
         }
-    }
-
-    fun reset() {
-        stopScan()
-        resetState()
-        _scanState.value = ScanState.READY
-        _scanStatus.value = "READY"
     }
 }
